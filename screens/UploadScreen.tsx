@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../types/navigation';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { analyzeOutfit } from '../services/openai';
 
 export default function UploadScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [image, setImage] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const takePicture = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -19,6 +22,7 @@ export default function UploadScreen() {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
+      base64: true,
     });
 
     if (!result.canceled) {
@@ -32,6 +36,7 @@ export default function UploadScreen() {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
+      base64: true,
     });
 
     if (!result.canceled) {
@@ -39,20 +44,39 @@ export default function UploadScreen() {
     }
   };
 
-  const handleAnalyze = () => {
-    if (image) {
+  const handleAnalyze = async () => {
+    if (!image) {
+      alert('Veuillez d\'abord prendre ou sélectionner une photo');
+      return;
+    }
+
+    try {
+      setIsAnalyzing(true);
+      
+      // Convertir l'image en base64
+      const base64 = await FileSystem.readAsStringAsync(image, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Analyser l'outfit avec l'API
+      const analysis = await analyzeOutfit(base64);
+
+      // Naviguer vers l'écran de résultat avec l'analyse
       navigation.navigate('Result', {
         analysis: {
           id: Date.now().toString(),
           imageUri: image,
           date: new Date().toISOString(),
-          score: 0,
-          feedback: [],
-          suggestions: []
+          score: analysis.score,
+          feedback: analysis.feedback,
+          suggestions: analysis.suggestions
         }
       });
-    } else {
-      alert('Veuillez d\'abord prendre ou sélectionner une photo');
+    } catch (error) {
+      console.error('Erreur lors de l\'analyse:', error);
+      alert('Une erreur est survenue lors de l\'analyse de l\'outfit');
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -91,8 +115,13 @@ export default function UploadScreen() {
           <TouchableOpacity 
             style={[styles.button, styles.analyzeButton]} 
             onPress={handleAnalyze}
+            disabled={isAnalyzing}
           >
-            <Text style={styles.buttonText}>Analyser l'outfit</Text>
+            {isAnalyzing ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Analyser l'outfit</Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
