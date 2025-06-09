@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../types/navigation';
@@ -8,9 +8,14 @@ export default function UploadScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [image, setImage] = useState<string | null>(null);
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  const takePicture = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Désolé, nous avons besoin des permissions de la caméra pour continuer !');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -21,14 +26,9 @@ export default function UploadScreen() {
     }
   };
 
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Désolé, nous avons besoin des permissions de la caméra pour continuer !');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -52,7 +52,7 @@ export default function UploadScreen() {
         }
       });
     } else {
-      alert('Veuillez d\'abord sélectionner ou prendre une photo');
+      alert('Veuillez d\'abord prendre ou sélectionner une photo');
     }
   };
 
@@ -63,26 +63,38 @@ export default function UploadScreen() {
           <Image source={{ uri: image }} style={styles.image} />
         ) : (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>Aucune image sélectionnée</Text>
+            <TouchableOpacity style={styles.cameraButton} onPress={takePicture}>
+              <Text style={styles.cameraButtonText}>📸</Text>
+              <Text style={styles.cameraButtonLabel}>Appuyez pour prendre une photo</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={pickImage}>
-          <Text style={styles.buttonText}>Choisir une photo</Text>
-        </TouchableOpacity>
+        {!image ? (
+          <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>Choisir une photo</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            <TouchableOpacity style={styles.button} onPress={takePicture}>
+              <Text style={styles.buttonText}>Reprendre une photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={pickImage}>
+              <Text style={styles.buttonText}>Choisir une photo</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
-        <TouchableOpacity style={styles.button} onPress={takePhoto}>
-          <Text style={styles.buttonText}>Prendre une photo</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.button, styles.analyzeButton]} 
-          onPress={handleAnalyze}
-        >
-          <Text style={styles.buttonText}>Analyser l'outfit</Text>
-        </TouchableOpacity>
+        {image && (
+          <TouchableOpacity 
+            style={[styles.button, styles.analyzeButton]} 
+            onPress={handleAnalyze}
+          >
+            <Text style={styles.buttonText}>Analyser l'outfit</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -111,9 +123,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderText: {
-    color: '#666',
+  cameraButton: {
+    alignItems: 'center',
+  },
+  cameraButtonText: {
+    fontSize: 48,
+    marginBottom: 10,
+  },
+  cameraButtonLabel: {
     fontSize: 16,
+    color: '#666',
   },
   buttonContainer: {
     gap: 10,
