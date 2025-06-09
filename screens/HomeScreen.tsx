@@ -23,6 +23,13 @@ export default function HomeScreen() {
         >
           <Text style={styles.buttonText}>Évaluer mon outfit</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.button, styles.historyButton]}
+          onPress={() => navigation.navigate('History')}
+        >
+          <Text style={styles.buttonText}>Voir l'historique</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -71,6 +78,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    marginBottom: 15,
+  },
+  historyButton: {
+    backgroundColor: '#5856D6',
   },
   buttonText: {
     color: '#fff',

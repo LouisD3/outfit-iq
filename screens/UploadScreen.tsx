@@ -41,7 +41,16 @@ export default function UploadScreen() {
 
   const handleAnalyze = () => {
     if (image) {
-      navigation.navigate('Result');
+      navigation.navigate('Result', {
+        analysis: {
+          id: Date.now().toString(),
+          imageUri: image,
+          date: new Date().toISOString(),
+          score: 0,
+          feedback: [],
+          suggestions: []
+        }
+      });
     } else {
       alert('Veuillez d\'abord sélectionner ou prendre une photo');
     }
