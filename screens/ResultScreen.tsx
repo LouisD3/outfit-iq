@@ -13,29 +13,9 @@ export default function ResultScreen() {
 
   useEffect(() => {
     if (route.params?.analysis) {
-      // Si c'est une nouvelle analyse (sans score ni feedback)
-      if (route.params.analysis.score === 0) {
-        // Simulation d'analyse IA
-        const simulatedAnalysis: OutfitAnalysis = {
-          ...route.params.analysis,
-          score: 8.5,
-          feedback: [
-            "Les couleurs sont bien coordonnées et créent une harmonie visuelle agréable.",
-            "La combinaison des textures est intéressante et ajoute de la profondeur à l'ensemble.",
-            "Les proportions sont bien équilibrées et mettent en valeur votre silhouette."
-          ],
-          suggestions: [
-            "Essayez d'ajouter un accessoire pour compléter l'ensemble.",
-            "Une ceinture pourrait mieux définir votre taille.",
-            "Pensez à ajouter une touche de couleur vive pour plus de dynamisme."
-          ]
-        };
-        setAnalysis(simulatedAnalysis);
-        storageService.saveAnalysis(simulatedAnalysis);
-      } else {
-        // Si c'est une analyse existante
-        setAnalysis(route.params.analysis);
-      }
+      setAnalysis(route.params.analysis);
+      // Sauvegarder l'analyse dans l'historique
+      storageService.saveAnalysis(route.params.analysis);
     }
   }, [route.params]);
 
