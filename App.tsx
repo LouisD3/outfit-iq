@@ -22,7 +22,10 @@ function Navigation() {
           <Stack.Screen 
             name="Home" 
             component={HomeScreen} 
-            options={{ title: 'OutfitIQ' }}
+            options={{ 
+              headerShown: false,
+              animation: 'fade'
+            }}
           />
           <Stack.Screen 
             name="Upload" 

@@ -34,6 +34,7 @@ export default function ResultScreen() {
       <View style={styles.scoreContainer}>
         <Text style={styles.scoreLabel}>Note globale</Text>
         <Text style={styles.score}>{analysis.score}/10</Text>
+        <Text style={styles.styleLabel}>Style : {analysis.style}</Text>
       </View>
 
       <View style={styles.section}>
@@ -99,5 +100,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#444',
     lineHeight: 24,
+  },
+  styleLabel: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+    textTransform: 'capitalize',
   },
 }); 

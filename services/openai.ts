@@ -14,20 +14,27 @@ export interface OutfitAnalysis {
   score: number;
   feedback: string[];
   suggestions: string[];
+  style: 'casual' | 'business' | 'elegant';
 }
 
-export async function analyzeOutfit(imageBase64: string): Promise<OutfitAnalysis> {
+export async function analyzeOutfit(imageBase64: string, style: 'casual' | 'business' | 'elegant' = 'casual'): Promise<OutfitAnalysis> {
   try {
     console.log('Début de l\'analyse avec OpenAI...');
     console.log('Longueur de l\'image en base64:', imageBase64.length);
     console.log('Clé API utilisée:', OPENAI_API_KEY.substring(0, 8) + '...');
     
+    const stylePrompt = {
+      casual: "Analysez l'outfit dans un style décontracté et quotidien.",
+      business: "Analysez l'outfit dans un style professionnel et business.",
+      elegant: "Analysez l'outfit dans un style élégant et sophistiqué."
+    }[style];
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "Vous êtes un expert en mode et style vestimentaire. Analysez l'outfit de la personne sur la photo et fournissez un feedback détaillé. Répondez au format JSON avec les champs suivants : score (nombre entre 0 et 10), feedback (tableau de 3 commentaires maximum), suggestions (tableau de 3 suggestions maximum). IMPORTANT : Ne pas inclure de backticks ou de marqueurs de code dans la réponse, juste le JSON brut."
+          content: `Vous êtes un expert en mode et style vestimentaire. ${stylePrompt} Analysez l'outfit de la personne sur la photo et fournissez un feedback détaillé. Répondez au format JSON avec les champs suivants : score (nombre entre 0 et 10), feedback (tableau de 3 commentaires maximum), suggestions (tableau de 3 suggestions maximum). IMPORTANT : Ne pas inclure de backticks ou de marqueurs de code dans la réponse, juste le JSON brut.`
         },
         {
           role: "user",
@@ -68,7 +75,8 @@ export async function analyzeOutfit(imageBase64: string): Promise<OutfitAnalysis
     return {
       score: analysis.score,
       feedback: analysis.feedback,
-      suggestions: analysis.suggestions
+      suggestions: analysis.suggestions,
+      style
     };
   } catch (error: any) {
     console.error('Erreur détaillée lors de l\'analyse:', {

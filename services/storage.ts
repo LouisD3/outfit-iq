@@ -7,6 +7,7 @@ export interface OutfitAnalysis {
   score: number;
   feedback: string[];
   suggestions: string[];
+  style: 'casual' | 'business' | 'elegant';
 }
 
 const STORAGE_KEY = '@outfitiq_analyses';

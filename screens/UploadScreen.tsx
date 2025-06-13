@@ -6,10 +6,13 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { analyzeOutfit } from '../services/openai';
 
+type Style = 'casual' | 'business' | 'elegant';
+
 export default function UploadScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<Style>('casual');
 
   const takePicture = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -59,7 +62,7 @@ export default function UploadScreen() {
       });
 
       // Analyser l'outfit avec l'API
-      const analysis = await analyzeOutfit(base64);
+      const analysis = await analyzeOutfit(base64, selectedStyle);
 
       // Naviguer vers l'écran de résultat avec l'analyse
       navigation.navigate('Result', {
@@ -69,7 +72,8 @@ export default function UploadScreen() {
           date: new Date().toISOString(),
           score: analysis.score,
           feedback: analysis.feedback,
-          suggestions: analysis.suggestions
+          suggestions: analysis.suggestions,
+          style: analysis.style
         }
       });
     } catch (error) {
@@ -93,6 +97,30 @@ export default function UploadScreen() {
             </TouchableOpacity>
           </View>
         )}
+      </View>
+
+      <View style={styles.styleContainer}>
+        <Text style={styles.styleTitle}>Choisissez un style :</Text>
+        <View style={styles.styleButtons}>
+          <TouchableOpacity 
+            style={[styles.styleButton, selectedStyle === 'casual' && styles.selectedStyleButton]} 
+            onPress={() => setSelectedStyle('casual')}
+          >
+            <Text style={[styles.styleButtonText, selectedStyle === 'casual' && styles.selectedStyleText]}>Casual</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.styleButton, selectedStyle === 'business' && styles.selectedStyleButton]} 
+            onPress={() => setSelectedStyle('business')}
+          >
+            <Text style={[styles.styleButtonText, selectedStyle === 'business' && styles.selectedStyleText]}>Business</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.styleButton, selectedStyle === 'elegant' && styles.selectedStyleButton]} 
+            onPress={() => setSelectedStyle('elegant')}
+          >
+            <Text style={[styles.styleButtonText, selectedStyle === 'elegant' && styles.selectedStyleText]}>Élégant</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -180,5 +208,38 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  styleContainer: {
+    marginBottom: 20,
+  },
+  styleTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  styleButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  styleButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    alignItems: 'center',
+  },
+  selectedStyleButton: {
+    backgroundColor: '#007AFF',
+  },
+  styleButtonText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectedStyleText: {
+    color: '#fff',
   },
 }); 
