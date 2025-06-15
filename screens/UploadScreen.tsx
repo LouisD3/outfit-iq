@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../types/navigation';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { analyzeOutfit } from '../services/openai';
-
-type Style = 'casual' | 'business' | 'elegant';
+import { Ionicons } from '@expo/vector-icons';
+import { Style, styleConfig } from '../types/style';
 
 export default function UploadScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -55,6 +55,7 @@ export default function UploadScreen() {
 
     try {
       setIsAnalyzing(true);
+      navigation.navigate('Loading');
       
       // Convertir l'image en base64
       const base64 = await FileSystem.readAsStringAsync(image, {
@@ -64,8 +65,8 @@ export default function UploadScreen() {
       // Analyser l'outfit avec l'API
       const analysis = await analyzeOutfit(base64, selectedStyle);
 
-      // Naviguer vers l'écran de résultat avec l'analyse
-      navigation.navigate('Result', {
+      // Remplacer l'écran de chargement par l'écran de résultat
+      navigation.replace('Result', {
         analysis: {
           id: Date.now().toString(),
           imageUri: image,
@@ -79,6 +80,7 @@ export default function UploadScreen() {
     } catch (error) {
       console.error('Erreur lors de l\'analyse:', error);
       alert('Une erreur est survenue lors de l\'analyse de l\'outfit');
+      navigation.goBack();
     } finally {
       setIsAnalyzing(false);
     }
@@ -92,7 +94,7 @@ export default function UploadScreen() {
         ) : (
           <View style={styles.placeholder}>
             <TouchableOpacity style={styles.cameraButton} onPress={takePicture}>
-              <Text style={styles.cameraButtonText}>📸</Text>
+              <Ionicons name="camera-outline" size={48} color="#007AFF" />
               <Text style={styles.cameraButtonLabel}>Appuyez pour prendre une photo</Text>
             </TouchableOpacity>
           </View>
@@ -100,27 +102,37 @@ export default function UploadScreen() {
       </View>
 
       <View style={styles.styleContainer}>
-        <Text style={styles.styleTitle}>Choisissez un style :</Text>
-        <View style={styles.styleButtons}>
-          <TouchableOpacity 
-            style={[styles.styleButton, selectedStyle === 'casual' && styles.selectedStyleButton]} 
-            onPress={() => setSelectedStyle('casual')}
-          >
-            <Text style={[styles.styleButtonText, selectedStyle === 'casual' && styles.selectedStyleText]}>Casual</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.styleButton, selectedStyle === 'business' && styles.selectedStyleButton]} 
-            onPress={() => setSelectedStyle('business')}
-          >
-            <Text style={[styles.styleButtonText, selectedStyle === 'business' && styles.selectedStyleText]}>Business</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.styleButton, selectedStyle === 'elegant' && styles.selectedStyleButton]} 
-            onPress={() => setSelectedStyle('elegant')}
-          >
-            <Text style={[styles.styleButtonText, selectedStyle === 'elegant' && styles.selectedStyleText]}>Élégant</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.styleTitle}>Choisis ton style :</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.styleScrollView}>
+          {Object.entries(styleConfig).map(([key, style]) => (
+            <TouchableOpacity 
+              key={key}
+              style={[
+                styles.styleButton,
+                selectedStyle === key && styles.selectedStyleButton
+              ]} 
+              onPress={() => setSelectedStyle(key as Style)}
+            >
+              <Ionicons 
+                name={style.icon} 
+                size={24} 
+                color={selectedStyle === key ? '#fff' : '#007AFF'} 
+              />
+              <Text style={[
+                styles.styleButtonText,
+                selectedStyle === key && styles.selectedStyleText
+              ]}>
+                {style.label}
+              </Text>
+              <Text style={[
+                styles.styleDescription,
+                selectedStyle === key && styles.selectedStyleDescription
+              ]}>
+                {style.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -182,14 +194,13 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     alignItems: 'center',
-  },
-  cameraButtonText: {
-    fontSize: 48,
-    marginBottom: 10,
+    padding: 20,
   },
   cameraButtonLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#007AFF',
+    marginTop: 10,
+    textAlign: 'center',
   },
   buttonContainer: {
     gap: 10,
@@ -218,18 +229,18 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 10,
   },
-  styleButtons: {
+  styleScrollView: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
   },
   styleButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 8,
+    padding: 15,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#007AFF',
     alignItems: 'center',
+    marginRight: 10,
+    width: 120,
+    backgroundColor: '#fff',
   },
   selectedStyleButton: {
     backgroundColor: '#007AFF',
@@ -238,8 +249,18 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 14,
     fontWeight: '600',
+    marginTop: 8,
   },
   selectedStyleText: {
+    color: '#fff',
+  },
+  styleDescription: {
+    color: '#666',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  selectedStyleDescription: {
     color: '#fff',
   },
 }); 

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Style } from '../types/style';
 
 export interface OutfitAnalysis {
   id: string;
@@ -7,7 +8,7 @@ export interface OutfitAnalysis {
   score: number;
   feedback: string[];
   suggestions: string[];
-  style: 'casual' | 'business' | 'elegant';
+  style: Style;
 }
 
 const STORAGE_KEY = '@outfitiq_analyses';

@@ -6,6 +6,7 @@ export type RootStackParamList = {
   Upload: undefined;
   Result: { analysis?: OutfitAnalysis };
   History: undefined;
+  Loading: undefined;
 };
 
 export type NavigationProp = NativeStackNavigationProp<RootStackParamList>; 

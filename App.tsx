@@ -7,6 +7,7 @@ import ResultScreen from './screens/ResultScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import LoadingScreen from './screens/LoadingScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -31,6 +32,14 @@ function Navigation() {
             name="Upload" 
             component={UploadScreen} 
             options={{ title: 'Upload Outfit' }}
+          />
+          <Stack.Screen 
+            name="Loading" 
+            component={LoadingScreen} 
+            options={{ 
+              headerShown: false,
+              animation: 'fade'
+            }}
           />
           <Stack.Screen 
             name="Result" 
