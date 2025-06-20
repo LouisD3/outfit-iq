@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, ScrollView, Alert, Modal, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../types/navigation';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,6 +13,7 @@ export default function UploadScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<Style>('casual');
+  const [trialEnded, setTrialEnded] = useState(false);
 
   const takePicture = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -52,20 +53,13 @@ export default function UploadScreen() {
       alert('Veuillez d\'abord prendre ou sélectionner une photo');
       return;
     }
-
     try {
       setIsAnalyzing(true);
       navigation.navigate('Loading');
-      
-      // Convertir l'image en base64
       const base64 = await FileSystem.readAsStringAsync(image, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
-      // Analyser l'outfit avec l'API
       const analysis = await analyzeOutfit(base64, selectedStyle);
-
-      // Remplacer l'écran de chargement par l'écran de résultat
       navigation.replace('Result', {
         analysis: {
           id: Date.now().toString(),
@@ -77,10 +71,15 @@ export default function UploadScreen() {
           style: analysis.style
         }
       });
-    } catch (error) {
-      console.error('Erreur lors de l\'analyse:', error);
-      alert('Une erreur est survenue lors de l\'analyse de l\'outfit');
-      navigation.goBack();
+    } catch (error: any) {
+      if (error.message && error.message.includes('Essai gratuit terminé')) {
+        setTrialEnded(true);
+        navigation.goBack();
+      } else {
+        console.error('Erreur lors de l\'analyse:', error);
+        alert('Une erreur est survenue lors de l\'analyse de l\'outfit');
+        navigation.goBack();
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -165,6 +164,31 @@ export default function UploadScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      <Modal
+        visible={trialEnded}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTrialEnded(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: '#fff', padding: 30, borderRadius: 16, alignItems: 'center', width: 300 }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>Essai gratuit terminé</Text>
+            <Text style={{ fontSize: 16, marginBottom: 20, textAlign: 'center' }}>
+              Votre essai gratuit est terminé. Passez au plan payant pour continuer à utiliser OutfitIQ !
+            </Text>
+            <Pressable
+              style={{ backgroundColor: '#007AFF', padding: 12, borderRadius: 8, width: '100%', alignItems: 'center', marginBottom: 10 }}
+              onPress={() => {/* TODO: Rediriger vers la page de souscription */}}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Souscrire</Text>
+            </Pressable>
+            <Pressable onPress={() => setTrialEnded(false)}>
+              <Text style={{ color: '#007AFF', fontSize: 16 }}>Fermer</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '../config/api';
 import { Style } from '../types/style';
+import { checkAndConsumeCall } from './rateLimit';
+import { getAuth } from 'firebase/auth';
 
 if (!OPENAI_API_KEY) {
   throw new Error('La clé API OpenAI n\'est pas configurée');
@@ -20,6 +22,11 @@ export interface OutfitAnalysis {
 
 export async function analyzeOutfit(imageBase64: string, style: Style = 'casual'): Promise<OutfitAnalysis> {
   try {
+    // Vérification de la limite d'usage utilisateur
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error('Utilisateur non authentifié');
+    await checkAndConsumeCall(user.uid);
     console.log('Début de l\'analyse avec OpenAI...');
     console.log('Longueur de l\'image en base64:', imageBase64.length);
     console.log('Clé API utilisée:', OPENAI_API_KEY.substring(0, 8) + '...');

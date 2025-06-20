@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, update: if request.auth.uid == userId;
+      allow create: if request.auth.uid != null;
+    }
+    match /suggestions/{suggestionId} {
+      allow create: if request.auth.uid == resource.data.userId && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.paidPlan == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.usageCount < get(/databases/$(database)/documents/users/$(request.auth.uid)).data.freeCalls
+      );
+      allow read, update, delete: if false;
+    }
+  }
+} 

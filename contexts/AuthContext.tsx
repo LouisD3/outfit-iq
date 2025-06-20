@@ -7,6 +7,7 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const db = getFirestore();
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -33,7 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      // Initialiser les champs d'essai gratuit dans Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        trialStart: serverTimestamp(),
+        usageCount: 0,
+        freeCalls: 5,
+        paidPlan: false
+      });
     } catch (error) {
       throw error;
     }
